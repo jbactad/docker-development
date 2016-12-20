@@ -1,0 +1,28 @@
+version: '2'
+services:
+  elasticsearch:
+    image: "elasticsearch"
+    volumes:
+      - './elasticsearch/config:/usr/share/elasticsearch/config'
+      - './elasticsearch/data:/usr/share/elasticsearch/data'
+    networks:
+      - elk
+  kibana:
+    image: "kibana"
+    # volumes:
+      # - './kibana/config:/usr/share/kibana/config'
+    depends_on:
+      - elasticsearch
+    networks:
+      elk:
+        ipv4_address: 192.168.3.102
+    environment:
+      SERVER_HOST: 192.168.3.102
+networks:
+  elk:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 192.168.3.0/24
+        gateway: 192.168.3.1
