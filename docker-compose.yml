@@ -1,25 +1,60 @@
 version: '2'
+
+
 services:
-  elasticsearch:
-    image: "elasticsearch"
-    volumes:
-      - './elasticsearch/config:/usr/share/elasticsearch/config'
-      - './elasticsearch/data:/usr/share/elasticsearch/data'
-    networks:
-      - elk
   kibana:
-    image: "kibana"
+    image: 'kibana'
     # volumes:
       # - './kibana/config:/usr/share/kibana/config'
     depends_on:
       - elasticsearch
-    networks:
-      elk:
-        ipv4_address: 192.168.3.102
+    ports:
+      - '1112:5601'
+
+  elasticsearch:
+    image: 'elasticsearch'
+    volumes:
+      - './elasticsearch/config:/usr/share/elasticsearch/config'
+      - './elasticsearch/data:/usr/share/elasticsearch/data'
+    ports:
+      - '1113:9200'
+
+  postgres:
+    image: 'postgres'
+    volumes:
+      - './postgres/data:/var/lib/postgresql/data'
     environment:
-      SERVER_HOST: 192.168.3.102
+      POSTGRES_USER: 'tradetracker'
+      POSTGRES_PASSWORD: 'tradetracker'
+      POSTGRES_DB: 'tradetracker'
+    networks:
+      default:
+        ipv4_address: 192.168.3.103
+
+  php-fpm:
+    image: php:fpm
+    ports:
+      - '9000'
+    volumes:
+      - './project:/var/www/html'
+
+  nginx:
+    image: 'nginx'
+    depends_on:
+      - php-fpm
+    networks:
+      default:
+        ipv4_address: 192.168.3.101
+    volumes:
+      - './nginx/config:/etc/nginx/conf.d'
+    volumes_from:
+      - php-fpm
+    ports:
+      - '1110:80'
+      - '1111:443'
+
 networks:
-  elk:
+  default:
     driver: bridge
     ipam:
       driver: default
