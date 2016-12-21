@@ -1,11 +1,10 @@
 version: '2'
 
-
 services:
   kibana:
     image: 'kibana'
     # volumes:
-      # - './kibana/config:/usr/share/kibana/config'
+      # - './volumes/kibana/config:/usr/share/kibana/config'
     depends_on:
       - elasticsearch
     ports:
@@ -14,15 +13,16 @@ services:
   elasticsearch:
     image: 'elasticsearch'
     volumes:
-      - './elasticsearch/config:/usr/share/elasticsearch/config'
-      - './elasticsearch/data:/usr/share/elasticsearch/data'
+      - './volumes/elasticsearch/config:/usr/share/elasticsearch/config'
+      - './volumes/elasticsearch/data:/usr/share/elasticsearch/data'
     ports:
       - '1113:9200'
 
   postgres:
     image: 'postgres'
     volumes:
-      - './postgres/data:/var/lib/postgresql/data'
+      - './volumes/postgres/data:/var/lib/postgresql/data'
+
     environment:
       POSTGRES_USER: 'tradetracker'
       POSTGRES_PASSWORD: 'tradetracker'
@@ -30,13 +30,28 @@ services:
     networks:
       default:
         ipv4_address: 192.168.3.103
+    ports:
+      - '1114:5432'
+
+  mysql:
+    image: 'mysql/mysql-server'
+    environment:
+      MYSQL_USER: 'tradetracker'
+      MYSQL_PASSWORD: 'tradetracker'
+      MYSQL_DATABASE: 'tradetracker'
+      MYSQL_ROOT_PASSWORD: 'tradetracker'
+      MYSQL_ROOT_HOST: '0.0.0.0'
+    volumes:
+      - './volumes/mysql/data:/var/lib/mysql'
+    ports:
+      - '1115:3306'
 
   php-fpm:
     image: php:fpm
     ports:
       - '9000'
     volumes:
-      - './project:/var/www/html'
+      - './volumes/project:/var/www/html'
 
   nginx:
     image: 'nginx'
@@ -46,7 +61,7 @@ services:
       default:
         ipv4_address: 192.168.3.101
     volumes:
-      - './nginx/config:/etc/nginx/conf.d'
+      - './volumes/nginx/config:/etc/nginx/conf.d'
     volumes_from:
       - php-fpm
     ports:

@@ -2,5 +2,5 @@
 elasticsearch/data/*
 !elasticsearch/data/.gitkeep
 
-postgres/data/*
-!postgres/data/.gitkeep
+/data/*
+!/data/.gitkeep

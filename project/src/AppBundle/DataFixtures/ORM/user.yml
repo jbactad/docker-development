@@ -1,0 +1,23 @@
+AppBundle\Entity\User:
+    user{1..50}:
+        username: '<username()>'
+        password: 'testpassword'
+        email: '<email()>'
+        is_active: 1
+        first_name: '<firstName()>'
+        last_name: '<lastName()>'
+    user{51..100}:
+        username: '<username()>'
+        password: 'testpassword'
+        email: '<email()>'
+        is_active: 0
+        first_name: '<firstName()>'
+        last_name: '<lastName()>'
+    user101:
+        username: 'default'
+        password: 'testpassword'
+        email: 'default@email.com'
+        is_active: 1
+        first_name: 'default'
+        last_name: 'default'
+

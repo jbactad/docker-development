@@ -1,0 +1,7 @@
+AppBundle\Entity\Post:
+    post{1..300}:
+        title: '<realText(255)>'
+        content: '<realText(1024)>'
+        author: '@user*'
+        date_created: '<dateTime()>'
+        date_updated: '<dateTime()>'
