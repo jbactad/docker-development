@@ -1,57 +1,65 @@
-version: '2'
+version: '2.1'
 
 services:
   kibana:
     image: 'kibana'
-    # volumes:
-      # - './volumes/kibana/config:/usr/share/kibana/config'
     depends_on:
       - elasticsearch
     ports:
-      - '1112:5601'
+      - '${KIBANA_PORT}:5601'
 
   elasticsearch:
     image: 'elasticsearch'
     volumes:
-      - './volumes/elasticsearch/config:/usr/share/elasticsearch/config'
-      - './volumes/elasticsearch/data:/usr/share/elasticsearch/data'
+      - './docker/elasticsearch/config:/usr/share/elasticsearch/config'
+      - './docker/elasticsearch/data:/usr/share/elasticsearch/data'
     ports:
-      - '1113:9200'
+      - '${ELASTICSEARCH_PORT}:9200'
+
+  zookeeper:
+    image: 'wurstmeister/zookeeper'
+    ports:
+      - '${ZOOKEEPER_PORT}:2181'
+
+  kafka:
+    image: 'wurstmeister/kafka'
+    depends_on:
+      - 'zookeeper'
+    ports:
+      - '${KAFKA_PORT}:9092'
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: '${KAFKA_HOST_NAME}'
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
 
   postgres:
     image: 'postgres'
     volumes:
-      - './volumes/postgres/data:/var/lib/postgresql/data'
-
+      - './docker/postgres/data:/var/lib/postgresql/data'
     environment:
-      POSTGRES_USER: 'tradetracker'
-      POSTGRES_PASSWORD: 'tradetracker'
-      POSTGRES_DB: 'tradetracker'
-    networks:
-      default:
-        ipv4_address: 192.168.3.103
+      POSTGRES_USER: '${DATABASE_USER}'
+      POSTGRES_PASSWORD: '${DATABASE_PASSWORD}'
+      POSTGRES_DB: '${DATABASE_NAME}'
     ports:
-      - '1114:5432'
+      - '${POSTGRE_PORT}:5432'
 
   mysql:
     image: 'mysql/mysql-server'
     environment:
-      MYSQL_USER: 'tradetracker'
-      MYSQL_PASSWORD: 'tradetracker'
-      MYSQL_DATABASE: 'tradetracker'
-      MYSQL_ROOT_PASSWORD: 'tradetracker'
-      MYSQL_ROOT_HOST: '0.0.0.0'
+      MYSQL_USER: '${DATABASE_USER}'
+      MYSQL_PASSWORD: '${DATABASE_PASSWORD}'
+      MYSQL_DATABASE: '${DATABASE_NAME}'
+      MYSQL_ROOT_PASSWORD: '${DATABASE_PASSWORD}'
     volumes:
-      - './volumes/mysql/data:/var/lib/mysql'
+      - './docker/mysql/data:/var/lib/mysql'
     ports:
-      - '1115:3306'
+      - '${MYSQL_PORT}:3306'
 
   php-fpm:
     image: php:fpm
-    ports:
+    expose:
       - '9000'
     volumes:
-      - './volumes/project:/var/www/html'
+      - './project:/var/www/html'
 
   nginx:
     image: 'nginx'
@@ -59,14 +67,14 @@ services:
       - php-fpm
     networks:
       default:
-        ipv4_address: 192.168.3.101
+        ipv4_address: '${NGINX_IP}'
     volumes:
-      - './volumes/nginx/config:/etc/nginx/conf.d'
+      - './docker/nginx/config:/etc/nginx/conf.d'
     volumes_from:
       - php-fpm
     ports:
-      - '1110:80'
-      - '1111:443'
+      - '${NGINX_HTTP_PORT}:80'
+      - '${NGINX_HTTPS_PORT}:443'
 
 networks:
   default:
@@ -74,5 +82,5 @@ networks:
     ipam:
       driver: default
       config:
-      - subnet: 192.168.3.0/24
-        gateway: 192.168.3.1
+      - subnet: '${SUBNET_MASK}'
+        gateway: '${GATEWAY}'
