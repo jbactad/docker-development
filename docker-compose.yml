@@ -31,24 +31,94 @@ services:
       KAFKA_ADVERTISED_HOST_NAME: '${KAFKA_HOST_NAME}'
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
 
+  mongo:
+    image: 'mongo'
+    ports:
+      - '${MONGO_PORT}:27017'
+    volumes:
+      - './docker/mongo/data:/data/db'
+
+  mongo-admin:
+    image: 'mongo-express'
+    depends_on:
+      - 'mongo'
+    ports:
+      - '${MONGO_ADMIN_PORT}:8081'
+    environment:
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: '${MONGO_ADMIN_ENABLE_ADMIN}'
+      ME_CONFIG_MONGODB_AUTH_USERNAME: '${MONGO_ADMIN_USER}'
+      ME_CONFIG_MONGODB_AUTH_PASSWORD: '${MONGO_ADMIN_PASSWORD}'
+      ME_CONFIG_MONGODB_AUTH_DATABASE: '${MONGO_ADMIN_AUTH_DATABASE}'
+
+  mongo1:
+    image: 'mongo'
+    hostname: mongo1
+    expose:
+      - "27017"
+      - "28017"
+    links:
+      - mongo2:mongo2
+      - mongo3:mongo3
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--replSet", "${MONGO_REPLICA_SET}", "--rest", "--httpinterface" ]
+    volumes:
+      - './docker/replicaset/mongo1/data:/data/db'
+
+  mongo2:
+    image: 'mongo'
+    hostname: mongo2
+    expose:
+      - "27017"
+      - "28017"
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--replSet", "${MONGO_REPLICA_SET}", "--rest", "--httpinterface" ]
+    volumes:
+      - './docker/replicaset/mongo2/data:/data/db'
+
+  mongo3:
+    image: 'mongo'
+    hostname: mongo3
+    expose:
+      - "27017"
+      - "28017"
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--replSet", "${MONGO_REPLICA_SET}", "--rest", "--httpinterface" ]
+    volumes:
+      - './docker/replicaset/mongo3/data:/data/db'
+
+  mongosetup:
+    image: 'mongo'
+    ports:
+      - '${MONGO_PORT}:27017'
+    links:
+      - mongo1:mongo1
+      - mongo2:mongo2
+      - mongo3:mongo3
+    volumes:
+      - './docker/mongo/scripts:/scripts'
+    restart: always
+    entrypoint: [ "bash", "/scripts/replicaset.sh" ]
+    environment:
+      MONGO_REPLICA_SET: '${MONGO_REPLICA_SET}'
+
   postgres:
     image: 'postgres'
     volumes:
       - './docker/postgres/data:/var/lib/postgresql/data'
     environment:
-      POSTGRES_USER: '${DATABASE_USER}'
-      POSTGRES_PASSWORD: '${DATABASE_PASSWORD}'
-      POSTGRES_DB: '${DATABASE_NAME}'
+      POSTGRES_USER: '${POSTGRES_USER}'
+      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD}'
+      POSTGRES_DB: '${POSTGRES_DATABASE}'
     ports:
-      - '${POSTGRE_PORT}:5432'
+      - '${POSTGRES_PORT}:5432'
 
   mysql:
     image: 'mysql/mysql-server'
     environment:
-      MYSQL_USER: '${DATABASE_USER}'
-      MYSQL_PASSWORD: '${DATABASE_PASSWORD}'
-      MYSQL_DATABASE: '${DATABASE_NAME}'
-      MYSQL_ROOT_PASSWORD: '${DATABASE_PASSWORD}'
+      MYSQL_USER: '${MYSQL_USER}'
+      MYSQL_PASSWORD: '${MYSQL_PASSWORD}'
+      MYSQL_DATABASE: '${MYSQL_DATABASE}'
+      MYSQL_ROOT_PASSWORD: '${MYSQL_PASSWORD}'
     volumes:
       - './docker/mysql/data:/var/lib/mysql'
     ports:
